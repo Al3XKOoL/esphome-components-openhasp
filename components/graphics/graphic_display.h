@@ -6,9 +6,29 @@
 #include "esphome/core/hal.h"
 #include "Arduino_GFX_Library.h"
 
-#ifdef USE_ARDUINO
-#define USE_SPI_ARDUINO_BACKEND
-#endif
+// Definiciones de pines (ajusta según tu configuración)
+#define TFT_DC  22
+#define TFT_CS  21
+#define TFT_WR  19
+#define TFT_RD  18
+#define TFT_D0  2
+#define TFT_D1  4
+#define TFT_D2  5
+#define TFT_D3  12
+#define TFT_D4  13
+#define TFT_D5  14
+#define TFT_D6  15
+#define TFT_D7  16
+#define TFT_RST 23
+
+// Comandos ILI9341
+#define ILI_CASET 0x2A
+#define ILI_PASET 0x2B
+#define ILI_RAMWR 0x2C
+
+//#ifdef USE_ARDUINO
+//#define USE_SPI_ARDUINO_BACKEND
+//#endif
 
 namespace esphome {
 namespace graphics {
@@ -132,7 +152,6 @@ public:
 
   void set_Arduino_GFX(Arduino_GFX *gfx, bool use_canvas, bool use_parallel = false) { 
     if (use_parallel) {
-      // Configuración para modo paralelo de 8 bits
       Arduino_DataBus *bus = new Arduino_ESP32PAR8(TFT_DC, TFT_CS, TFT_WR, TFT_RD, TFT_D0, TFT_D1, TFT_D2, TFT_D3, TFT_D4, TFT_D5, TFT_D6, TFT_D7);
       gfx = new Arduino_ILI9341(bus, TFT_RST, 0 /* rotation */, false /* IPS */);
     }

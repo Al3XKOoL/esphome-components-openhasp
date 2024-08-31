@@ -34,7 +34,6 @@ from esphome.schema_extractors import (
 
 
 CODEOWNERS = ["@nielsnl68"]
-AUTO_LOAD = ["psram"]
 
 
 GRAPHICS_ns = cg.esphome_ns.namespace("graphics")
@@ -323,12 +322,10 @@ GRAPHICS_PINS = [
 
 @coroutine_with_priority(90.0)
 async def to_code(config):
-    cg.add_build_flag("-DDISABLE_COLOR_DEFINES")
-
     if CORE.using_arduino:
         cg.add_library("SPI", None)
         cg.add_library("WIRE", None)
-    cg.add_library("GFX Library for Arduino", "~1.3.1","https://github.com/Al3XKOoL/Arduino_GFX.git")
+    cg.add_library("GFX Library for Arduino", "~1.3.1","https://github.com/nielsnl68/Arduino_GFX.git")
 
     var = cg.new_Pvariable(config[CONF_ID])
     await cg.register_component(var, config)

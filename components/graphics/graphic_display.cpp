@@ -136,18 +136,34 @@ void GraphicsDisplay::dump_config() {
 }
 
 void GraphicsDisplay::setup() {
-  this->gfx_->begin();
+  // Configurar pines
+  pinMode(TFT_DC, OUTPUT);
+  pinMode(TFT_CS, OUTPUT);
+  pinMode(TFT_WR, OUTPUT);
+  pinMode(TFT_RD, OUTPUT);
+  pinMode(TFT_RST, OUTPUT);
+  for (int i = 0; i < 8; i++) {
+    pinMode(TFT_D0 + i, OUTPUT);
+  }
+
+  // Reset del display
+  digitalWrite(TFT_RST, HIGH);
+  delay(5);
+  digitalWrite(TFT_RST, LOW);
+  delay(20);
+  digitalWrite(TFT_RST, HIGH);
+  delay(150);
+
+  // Inicialización del display
+  write_command(0xEF);
+  write_data(0x03);
+  write_data(0x80);
+  write_data(0x02);
+  
+  // ... (añade aquí el resto de los comandos de inicialización del ILI9341)
+
   this->clear();
   this->has_started_ = true;
-
-#ifdef USE_LIGHT
-  if (!this->display_on_ ||
-      (light_ != nullptr && !this->light_->current_values.is_on())) {
-#else
-  if (!this->display_on_) {
-#endif
-    display_off();
-  }
 }
 
 void GraphicsDisplay::update() {
@@ -204,6 +220,37 @@ void GraphicsDisplay::set_address_window(uint16_t x1, uint16_t y1, uint16_t x2, 
   write_data(y2 & 0xFF);
 
   write_command(ILI_RAMWR);
+}
+
+void GraphicsDisplay::draw_pixel(int16_t x, int16_t y, uint16_t color) {
+  if (x < 0 || x >= this->get_width() || y < 0 || y >= this->get_height())
+    return;
+  
+  set_address_window(x, y, x, y);
+  write_data(color >> 8);
+  write_data(color & 0xFF);
+}
+
+void GraphicsDisplay::fill_rect(int16_t x, int16_t y, int16_t w, int16_t h, uint16_t color) {
+  if (x >= this->get_width() || y >= this->get_height())
+    return;
+  
+  int16_t x2 = x + w - 1, y2 = y + h - 1;
+  if (x2 < 0 || y2 < 0)
+    return;
+  
+  if (x < 0) x = 0;
+  if (y < 0) y = 0;
+  if (x2 >= this->get_width()) x2 = this->get_width() - 1;
+  if (y2 >= this->get_height()) y2 = this->get_height() - 1;
+  
+  set_address_window(x, y, x2, y2);
+  
+  uint8_t hi = color >> 8, lo = color & 0xFF;
+  for (int32_t i = (int32_t)(y2 - y + 1) * (x2 - x + 1); i > 0; i--) {
+    write_data(hi);
+    write_data(lo);
+  }
 }
 
 } // namespace graphics

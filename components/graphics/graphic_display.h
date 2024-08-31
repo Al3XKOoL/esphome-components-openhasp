@@ -130,7 +130,13 @@ public:
     this->auto_clear_enabled_ = auto_clear_enabled;
   }
 
-  void set_Arduino_GFX(Arduino_GFX *gfx, bool use_canvas) { 
+  void set_Arduino_GFX(Arduino_GFX *gfx, bool use_canvas, bool use_parallel = false) { 
+    if (use_parallel) {
+      // Configuración para modo paralelo de 8 bits
+      Arduino_DataBus *bus = new Arduino_ESP32PAR8(TFT_DC, TFT_CS, TFT_WR, TFT_RD, TFT_D0, TFT_D1, TFT_D2, TFT_D3, TFT_D4, TFT_D5, TFT_D6, TFT_D7);
+      gfx = new Arduino_ILI9341(bus, TFT_RST, 0 /* rotation */, false /* IPS */);
+    }
+    
     if (use_canvas) {
       gfx = new Arduino_Canvas(gfx->width(), gfx->height(), gfx);
     }
@@ -361,6 +367,73 @@ public:
 
   uint16_t color565(uint8_t red, uint8_t green, uint8_t blue) {
     return ((red & 0xF8) << 8) | ((green & 0xFC) << 3) | (blue >> 3);
+  }
+
+  void write_command(uint8_t cmd) {
+    digitalWrite(TFT_DC, LOW);
+    digitalWrite(TFT_CS, LOW);
+    write_8bit(cmd);
+    digitalWrite(TFT_CS, HIGH);
+  }
+
+  void write_data(uint8_t data) {
+    digitalWrite(TFT_DC, HIGH);
+    digitalWrite(TFT_CS, LOW);
+    write_8bit(data);
+    digitalWrite(TFT_CS, HIGH);
+  }
+
+  void write_8bit(uint8_t data) {
+    digitalWrite(TFT_WR, LOW);
+    WRITE_PERI_REG(GPIO_OUT_REG, (READ_PERI_REG(GPIO_OUT_REG) & ~0xFF) | data);
+    digitalWrite(TFT_WR, HIGH);
+  }
+
+  void set_address_window(uint16_t x1, uint16_t y1, uint16_t x2, uint16_t y2) {
+    write_command(ILI_CASET);
+    write_data(x1 >> 8);
+    write_data(x1 & 0xFF);
+    write_data(x2 >> 8);
+    write_data(x2 & 0xFF);
+
+    write_command(ILI_PASET);
+    write_data(y1 >> 8);
+    write_data(y1 & 0xFF);
+    write_data(y2 >> 8);
+    write_data(y2 & 0xFF);
+
+    write_command(ILI_RAMWR);
+  }
+
+  void draw_pixel(int16_t x, int16_t y, uint16_t color) {
+    if (x < 0 || x >= this->get_width() || y < 0 || y >= this->get_height())
+      return;
+    
+    set_address_window(x, y, x, y);
+    write_data(color >> 8);
+    write_data(color & 0xFF);
+  }
+
+  void fill_rect(int16_t x, int16_t y, int16_t w, int16_t h, uint16_t color) {
+    if (x >= this->get_width() || y >= this->get_height())
+      return;
+    
+    int16_t x2 = x + w - 1, y2 = y + h - 1;
+    if (x2 < 0 || y2 < 0)
+      return;
+    
+    if (x < 0) x = 0;
+    if (y < 0) y = 0;
+    if (x2 >= this->get_width()) x2 = this->get_width() - 1;
+    if (y2 >= this->get_height()) y2 = this->get_height() - 1;
+    
+    set_address_window(x, y, x2, y2);
+    
+    uint8_t hi = color >> 8, lo = color & 0xFF;
+    for (int32_t i = (int32_t)(y2 - y + 1) * (x2 - x + 1); i > 0; i--) {
+      write_data(hi);
+      write_data(lo);
+    }
   }
 
 protected:

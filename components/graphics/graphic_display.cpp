@@ -170,5 +170,41 @@ void GraphicsDisplay::update() {
   prossing_update = false;
 }
 
+void GraphicsDisplay::write_command(uint8_t cmd) {
+  digitalWrite(TFT_DC, LOW);
+  digitalWrite(TFT_CS, LOW);
+  write_8bit(cmd);
+  digitalWrite(TFT_CS, HIGH);
+}
+
+void GraphicsDisplay::write_data(uint8_t data) {
+  digitalWrite(TFT_DC, HIGH);
+  digitalWrite(TFT_CS, LOW);
+  write_8bit(data);
+  digitalWrite(TFT_CS, HIGH);
+}
+
+void GraphicsDisplay::write_8bit(uint8_t data) {
+  digitalWrite(TFT_WR, LOW);
+  WRITE_PERI_REG(GPIO_OUT_REG, (READ_PERI_REG(GPIO_OUT_REG) & ~0xFF) | data);
+  digitalWrite(TFT_WR, HIGH);
+}
+
+void GraphicsDisplay::set_address_window(uint16_t x1, uint16_t y1, uint16_t x2, uint16_t y2) {
+  write_command(ILI_CASET);
+  write_data(x1 >> 8);
+  write_data(x1 & 0xFF);
+  write_data(x2 >> 8);
+  write_data(x2 & 0xFF);
+
+  write_command(ILI_PASET);
+  write_data(y1 >> 8);
+  write_data(y1 & 0xFF);
+  write_data(y2 >> 8);
+  write_data(y2 & 0xFF);
+
+  write_command(ILI_RAMWR);
+}
+
 } // namespace graphics
 } // namespace esphome

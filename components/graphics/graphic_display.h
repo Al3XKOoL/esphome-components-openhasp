@@ -24,11 +24,11 @@ struct Rect {
   int16_t width;  ///< Width of region
   int16_t height; ///< Height of region
 
-  inline Rect() ALWAYS_INLINE : x(RECT_NO_SET),
-                                y(RECT_NO_SET),
-                                width(RECT_NO_SET),
-                                height(RECT_NO_SET) {} // NOLINT
-  inline Rect(int16_t x, int16_t y, int16_t width, int16_t height) ALWAYS_INLINE
+  inline Rect() : x(RECT_NO_SET),
+                  y(RECT_NO_SET),
+                  width(RECT_NO_SET),
+                  height(RECT_NO_SET) {} // NOLINT
+  inline Rect(int16_t x, int16_t y, int16_t width, int16_t height)
       : x(x),
         y(y),
         width(width),
@@ -40,7 +40,7 @@ struct Rect {
     return this->y + this->height;
   } ///< Y coordinate of corner
 
-  inline bool is_set() ALWAYS_INLINE {
+  inline bool is_set() {
     return (this->height != RECT_NO_SET) && (this->width != RECT_NO_SET);
   }
 

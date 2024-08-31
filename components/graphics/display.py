@@ -328,7 +328,7 @@ async def to_code(config):
     if CORE.using_arduino:
         cg.add_library("SPI", None)
         cg.add_library("WIRE", None)
-    cg.add_library("GFX Library for Arduino", "~1.3.1","https://github.com/nielsnl68/Arduino_GFX.git")
+    cg.add_library("GFX Library for Arduino", "~1.3.1","https://github.com/Al3XKOoL/Arduino_GFX.git")
 
     var = cg.new_Pvariable(config[CONF_ID])
     await cg.register_component(var, config)
